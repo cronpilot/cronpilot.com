@@ -65,7 +65,8 @@ cloud), not proxied.
 
 **Cloudflare rules for the zone:**
 
-- **Redirect `www`:** Rules → Redirect Rules → the "Redirect from WWW to root" template.
+- **Redirect to `www`:** `www.cronpilot.com` is the canonical address. Rules → Redirect Rules → the "Redirect from
+  root to WWW" template sends `cronpilot.com` there with a 301.
 - **Rate-limit the signup:** Security → WAF → Rate limiting rules, for example 5 requests per 10 seconds per IP on
   `/api/waitlist`. This stops the form being used to send lots of confirmation emails.
 

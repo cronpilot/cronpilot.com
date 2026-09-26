@@ -125,7 +125,7 @@ export async function sendConfirmationEmail(env, email, link) {
       '',
       "We'll only email you about the Cloud launch. If you didn't ask to join, ignore this email and you won't be added.",
       '',
-      '— Peter Meth, Cron Pilot · https://cronpilot.com',
+      '— Peter Meth, Cron Pilot · https://www.cronpilot.com',
     ].join('\n'),
     html: confirmationEmailHtml(link),
   }, {
@@ -221,7 +221,7 @@ function confirmationEmailHtml(link) {
     <p style="margin:0 0 24px;font-size:16px">Confirm your email to join the waitlist:</p>
     <p style="margin:0 0 24px"><a href="${href}" style="display:inline-block;background:#f4400d;color:#fff;text-decoration:none;font-weight:600;border-radius:10px;padding:12px 20px">Confirm my email</a></p>
     <p style="margin:0 0 16px;font-size:14px;color:#5c5a70">We'll only email you about the Cloud launch. If you didn't ask to join, ignore this email and you won't be added.</p>
-    <p style="margin:0;font-size:13px;color:#5c5a70">Peter Meth, Cron Pilot · <a href="https://cronpilot.com" style="color:#f4400d">cronpilot.com</a></p>
+    <p style="margin:0;font-size:13px;color:#5c5a70">Peter Meth, Cron Pilot · <a href="https://www.cronpilot.com" style="color:#f4400d">cronpilot.com</a></p>
   </div>
 </body></html>`;
 }
