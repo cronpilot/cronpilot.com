@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 
-import { onRequestPost as signup } from '../functions/api/waitlist.js';
-import { onRequestGet as showConfirm, onRequestPost as confirm } from '../functions/api/waitlist/confirm.js';
-import { confirmationUrl, verifyConfirmation } from '../lib/waitlist.js';
+import { onRequestPost as signup } from '../src/routes/waitlist.js';
+import { onRequestGet as showConfirm, onRequestPost as confirm } from '../src/routes/confirm.js';
+import { confirmationUrl, verifyConfirmation } from '../src/lib.js';
+import worker from '../src/worker.js';
 
 const ORIGIN = 'https://cronpilot.com';
 const env = {
@@ -170,5 +171,30 @@ describe('/api/waitlist/confirm', () => {
     const html = await (await showConfirm({ request: new Request(link), env })).text();
 
     assert.doesNotMatch(html, /<script>x<\/script>/);
+  });
+});
+
+describe('worker routing', () => {
+  const assets = { fetch: async () => new Response('static file') };
+
+  it('serves anything else from the static assets', async () => {
+    const response = await worker.fetch(new Request(`${ORIGIN}/api/something-else`), { ...env, ASSETS: assets });
+
+    assert.equal(await response.text(), 'static file');
+  });
+
+  it('routes the signup and confirm endpoints to their handlers', async () => {
+    const signupResponse = await worker.fetch(post({ email: 'nope' }), { ...env, ASSETS: assets });
+    const confirmResponse = await worker.fetch(new Request(`${ORIGIN}/api/waitlist/confirm`), { ...env, ASSETS: assets });
+
+    assert.equal(signupResponse.status, 422);
+    assert.equal(confirmResponse.status, 400);
+  });
+
+  it('rejects methods an endpoint does not handle', async () => {
+    const response = await worker.fetch(new Request(`${ORIGIN}/api/waitlist`), { ...env, ASSETS: assets });
+
+    assert.equal(response.status, 405);
+    assert.equal(response.headers.get('Allow'), 'POST');
   });
 });

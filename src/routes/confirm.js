@@ -4,7 +4,7 @@ import {
   page,
   requireEnv,
   verifyConfirmation,
-} from '../../../lib/waitlist.js';
+} from '../lib.js';
 
 const invalidLink = () => page(
   'Link expired',

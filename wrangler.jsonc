@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cronpilot-com",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Missing pages get public/404.html with a 404 status.
+    "not_found_handling": "404-page",
+    // Only the waitlist API runs code; everything else is served as a static file.
+    "run_worker_first": ["/api/*"]
+  },
+
+  // Plain, non-secret settings. `wrangler deploy` replaces the Worker's plain
+  // variables with these, so set them here rather than in the dashboard.
+  // Secrets (RESEND_API_KEY, WAITLIST_SIGNING_KEY) are set in the dashboard and
+  // are left alone by deploys.
+  "vars": {
+    "WAITLIST_FROM": "Cron Pilot <waitlist@cronpilot.com>"
+    // "RESEND_SEGMENT_ID": "add the Cloud waitlist segment's ID here"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}
