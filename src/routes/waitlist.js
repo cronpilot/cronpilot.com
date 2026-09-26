@@ -5,7 +5,7 @@ import {
   normalizeEmail,
   requireEnv,
   sendConfirmationEmail,
-} from '../../lib/waitlist.js';
+} from '../lib.js';
 
 /**
  * POST /api/waitlist: send a confirmation email to the address the form

@@ -760,7 +760,7 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
 
     <!--
       WAITLIST FORM
-      The script POSTs JSON { email, company } to WAITLIST_ENDPOINT (functions/api/waitlist.js), which
+      The script POSTs JSON { email, company } to WAITLIST_ENDPOINT (src/routes/waitlist.js), which
       emails a confirmation link. The address only joins the list once that link is confirmed.
       Set WAITLIST_ENDPOINT to '' to preview the form without a backend: an address containing "fail"
       (e.g. fail@example.com) then shows the error state.
@@ -820,7 +820,7 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
 <script>
 (function () {
   /* ---------- Config ---------- */
-  var WAITLIST_ENDPOINT = '/api/waitlist';  // functions/api/waitlist.js sends a confirmation email
+  var WAITLIST_ENDPOINT = '/api/waitlist';  // src/routes/waitlist.js sends a confirmation email
   var SHOW_STAR_COUNT = false;     // set true to show the GitHub star count in the header (one call to api.github.com)
 
   var root = document.documentElement;

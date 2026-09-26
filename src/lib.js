@@ -9,11 +9,11 @@
 // 4. Pressing it creates the contact in Resend, which records when consent
 //    was given.
 //
-// Environment (Cloudflare Pages > Settings > Variables and Secrets):
-//   RESEND_API_KEY        secret   Resend API key
-//   WAITLIST_SIGNING_KEY  secret   random string used to sign confirmation links
-//   WAITLIST_FROM         plain    e.g. "Cron Pilot <waitlist@cronpilot.com>"
-//   RESEND_SEGMENT_ID     plain    optional: Resend segment to add contacts to
+// Environment:
+//   RESEND_API_KEY        secret   Resend API key (Worker > Settings > Variables and Secrets)
+//   WAITLIST_SIGNING_KEY  secret   random string used to sign confirmation links (same place)
+//   WAITLIST_FROM         plain    in wrangler.jsonc, e.g. "Cron Pilot <waitlist@cronpilot.com>"
+//   RESEND_SEGMENT_ID     plain    in wrangler.jsonc, optional: Resend segment to add contacts to
 
 const RESEND_API = 'https://api.resend.com';
 const LINK_LIFETIME_SECONDS = 7 * 24 * 60 * 60;
