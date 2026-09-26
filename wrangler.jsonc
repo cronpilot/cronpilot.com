@@ -18,8 +18,19 @@
   // Secrets (RESEND_API_KEY, WAITLIST_SIGNING_KEY) are set in the dashboard and
   // are left alone by deploys.
   "vars": {
-    "WAITLIST_FROM": "Cron Pilot <waitlist@cronpilot.com>"
-    // "RESEND_SEGMENT_ID": "add the Cloud waitlist segment's ID here"
+    "WAITLIST_FROM": "Cron Pilot <waitlist@cronpilot.com>",
+    // The "Cloud waitlist" segment in Resend. An identifier, not a secret.
+    "RESEND_SEGMENT_ID": "5366eb54-34c7-47f7-9e61-4fa142e2a815"
+  },
+
+  // PR builds deploy as Previews, which never inherit production secrets, so
+  // a Preview can't send email or add contacts. These are its own settings:
+  // no segment, so nothing a Preview does can reach the real waitlist.
+  "previews": {
+    "vars": {
+      "WAITLIST_FROM": "Cron Pilot <waitlist@cronpilot.com>",
+      "RESEND_SEGMENT_ID": ""
+    }
   },
 
   "observability": {
