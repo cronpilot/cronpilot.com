@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Secrets never belong in this public repo: API keys live in the Lambda's
+# environment, and AWS access comes from GitHub OIDC, not stored keys.
+.env
+.env.*
+
+# Local tooling
+node_modules/
+.wrangler/
+.aws-sam/
+*.zip

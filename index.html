@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cron Pilot · Open-source control panel for scheduled jobs</title>
+<meta name="description" content="Cron Pilot is an open-source, self-hosted control panel for scheduling, running and monitoring jobs on your servers. MIT licensed.">
+<link rel="canonical" href="https://cronpilot.com/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cronpilot.com/">
+<meta property="og:title" content="Cron Pilot · Your scheduled jobs shouldn't be invisible">
+<meta property="og:description" content="An open-source, self-hosted control panel for scheduling, running and monitoring jobs on your servers.">
+<meta property="og:image" content="https://cronpilot.com/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0d1c" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/familjen-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+  /* Apply a saved theme choice before first paint. No choice = follow the OS. */
+  try { var t = localStorage.getItem('cp-theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<style>
+/* FONTS:START (self-hosted, no third-party requests) */
+@font-face{font-family:'Familjen Grotesk';font-weight:600;font-style:normal;font-display:swap;src:url(assets/fonts/familjen-grotesk-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Familjen Grotesk';font-weight:700;font-style:normal;font-display:swap;src:url(assets/fonts/familjen-grotesk-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-weight:400;font-style:normal;font-display:swap;src:url(assets/fonts/ibm-plex-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-weight:400;font-style:italic;font-display:swap;src:url(assets/fonts/ibm-plex-sans-latin-400-italic.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-weight:500;font-style:normal;font-display:swap;src:url(assets/fonts/ibm-plex-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Sans';font-weight:600;font-style:normal;font-display:swap;src:url(assets/fonts/ibm-plex-sans-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:400;font-style:normal;font-display:swap;src:url(assets/fonts/ibm-plex-mono-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'IBM Plex Mono';font-weight:500;font-style:normal;font-display:swap;src:url(assets/fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Quicksand';font-weight:700;font-style:normal;font-display:swap;src:url(assets/fonts/quicksand-latin-700-normal.woff2) format('woff2')}
+/* FONTS:END */
+
+/* ---------- Tokens ---------- */
+:root{
+  color-scheme: light;
+  --bg:#fbfaf8;          /* page ground, faint warm bias toward the logo cream */
+  --bg-alt:#f3f1ec;      /* alternating band */
+  --surface:#ffffff;
+  --ink:#1c1a3a;         /* navy-biased near-black */
+  --ink-2:#44425f;
+  --muted:#6a6884;
+  --line:#e4e1da;
+  --line-strong:#cfcbc2;
+  --brand-orange:#f4400d;   /* the plane */
+  --orange-ink:#c0330a;     /* orange for small text, passes contrast */
+  --navy:#2f2a76;
+  --cream:#fef0da;
+  --link:#7e22ce;           /* the app's purple */
+  --focus:#9333ea;
+  --btn-bg:#2f2a76; --btn-fg:#ffffff; --btn-bg-hover:#241f5e;
+  --btn2-bg:transparent; --btn2-fg:#1c1a3a; --btn2-line:#cfcbc2;
+  --ok:#15803d; --ok-bg:#ecfdf3; --ok-line:#bbe5c8;
+  --fail:#b91c1c; --fail-bg:#fef2f2; --fail-line:#f5c2c2;
+  --skip:#a14a06; --skip-bg:#fff7ea; --skip-line:#f3d29b;
+  --code-bg:#15132b; --code-ink:#e8e6f5; --code-muted:#9795b3; --code-accent:#ff8a5c;
+  --band-bg:#2f2a76; --band-ink:#ffffff; --band-muted:#c9c6ec; --band-line:#4a44a0;
+  --shadow:0 1px 2px rgba(28,26,58,.06), 0 12px 40px -12px rgba(28,26,58,.22);
+  --show-light:block; --show-dark:none;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0e0d1c; --bg-alt:#141328; --surface:#18172f;
+    --ink:#f5f4fc; --ink-2:#d6d4e8; --muted:#aeabc9;
+    --line:#2a2847; --line-strong:#3b3960;
+    --orange-ink:#ff7a4d; --link:#c4a4ff; --focus:#c084fc;
+    --btn-bg:#fef0da; --btn-fg:#1c1a3a; --btn-bg-hover:#fff6e8;
+    --btn2-fg:#f5f4fc; --btn2-line:#3b3960;
+    --ok:#4ade80; --ok-bg:#0f2a1b; --ok-line:#1d5234;
+    --fail:#f87171; --fail-bg:#2d1216; --fail-line:#5c2229;
+    --skip:#fbbf24; --skip-bg:#2b200b; --skip-line:#5a4413;
+    --code-bg:#08070f; --code-ink:#e8e6f5; --code-muted:#aba9c8; --code-accent:#ff8a5c;
+    --band-bg:#1b1846; --band-ink:#ffffff; --band-muted:#d3d0f2; --band-line:#39348a;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 48px -16px rgba(0,0,0,.7);
+    --show-light:none; --show-dark:block;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0e0d1c; --bg-alt:#141328; --surface:#18172f;
+  --ink:#f5f4fc; --ink-2:#d6d4e8; --muted:#aeabc9;
+  --line:#2a2847; --line-strong:#3b3960;
+  --orange-ink:#ff7a4d; --link:#c4a4ff; --focus:#c084fc;
+  --btn-bg:#fef0da; --btn-fg:#1c1a3a; --btn-bg-hover:#fff6e8;
+  --btn2-fg:#f5f4fc; --btn2-line:#3b3960;
+  --ok:#4ade80; --ok-bg:#0f2a1b; --ok-line:#1d5234;
+  --fail:#f87171; --fail-bg:#2d1216; --fail-line:#5c2229;
+  --skip:#fbbf24; --skip-bg:#2b200b; --skip-line:#5a4413;
+  --code-bg:#08070f; --code-ink:#e8e6f5; --code-muted:#aba9c8; --code-accent:#ff8a5c;
+  --band-bg:#1b1846; --band-ink:#ffffff; --band-muted:#d3d0f2; --band-line:#39348a;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 48px -16px rgba(0,0,0,.7);
+  --show-light:none; --show-dark:block;
+}
+
+/* ---------- Base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:'IBM Plex Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:17px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img,video{max-width:100%;height:auto;display:block}
+a{color:var(--link);text-underline-offset:.18em;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+code,kbd,pre{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+:not(pre)>code{font-size:.88em;background:var(--bg-alt);border:1px solid var(--line);padding:.08em .35em;border-radius:5px;white-space:nowrap}
+h1,h2,h3{font-family:'Familjen Grotesk','IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;font-weight:700;line-height:1.08;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1{font-size:clamp(2.5rem,6.2vw,4.6rem);letter-spacing:-.035em}
+h2{font-size:clamp(1.9rem,3.8vw,2.9rem)}
+h3{font-size:1.2rem;letter-spacing:-.01em;line-height:1.25}
+p{margin:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip-link{position:absolute;left:16px;top:-60px;z-index:100;background:var(--btn-bg);color:var(--btn-fg);padding:10px 14px;border-radius:8px}
+.skip-link:focus{top:12px}
+
+.theme-light{display:var(--show-light)}
+.theme-dark{display:var(--show-dark)}
+
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:20px}
+.section{padding-block:clamp(72px,10vw,128px)}
+.band{background:var(--bg-alt);border-block:1px solid var(--line)}
+.eyebrow{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.82rem;font-weight:500;color:var(--orange-ink);letter-spacing:.02em;margin-bottom:18px;display:block}
+.lede{font-size:clamp(1.08rem,1.6vw,1.22rem);color:var(--ink-2);max-width:62ch}
+.section-head{display:grid;gap:18px;margin-bottom:clamp(40px,6vw,64px);max-width:760px}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;font:600 1rem/1 'IBM Plex Sans',system-ui,sans-serif;padding:14px 20px;border-radius:10px;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.btn svg{width:18px;height:18px;flex:none}
+.btn-primary{background:var(--btn-bg);color:var(--btn-fg)}
+.btn-primary:hover{background:var(--btn-bg-hover)}
+.btn-secondary{background:var(--btn2-bg);color:var(--btn2-fg);border-color:var(--btn2-line)}
+.btn-secondary:hover{border-color:var(--ink-2)}
+.btn:active{transform:translateY(1px)}
+
+/* ---------- Header ---------- */
+.site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.header-inner{display:flex;align-items:center;gap:24px;height:66px}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--brand-orange);font-family:'Quicksand','Familjen Grotesk',system-ui,sans-serif;font-weight:700;font-size:1.42rem;letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:34px;height:auto}
+.nav{display:flex;align-items:center;gap:26px;margin-left:auto}
+.nav a{color:var(--ink-2);text-decoration:none;font-size:.95rem;font-weight:500}
+.nav a:hover{color:var(--ink)}
+.header-actions{display:flex;align-items:center;gap:10px}
+.gh-link{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:9px;color:var(--ink);text-decoration:none;font-size:.92rem;font-weight:600}
+.gh-link svg{width:17px;height:17px}
+.gh-link:hover{border-color:var(--ink-2)}
+.gh-stars{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--muted);padding-left:8px;border-left:1px solid var(--line-strong)}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;border:1px solid var(--line-strong);border-radius:9px;background:transparent;color:var(--ink);cursor:pointer}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn:hover{border-color:var(--ink-2)}
+.icon-sun{display:var(--show-dark)}
+.icon-moon{display:var(--show-light)}
+.menu{display:none;position:relative}
+.menu summary{list-style:none}
+.menu summary::-webkit-details-marker{display:none}
+.menu-panel{position:absolute;right:0;top:48px;min-width:220px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:8px;display:grid}
+.menu-panel a{padding:11px 12px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500}
+.menu-panel a:hover{background:var(--bg-alt)}
+@media (max-width: 880px){
+  .nav{display:none}
+  .menu{display:block}
+  .header-actions{margin-left:auto}
+}
+@media (max-width: 420px){ .gh-link .gh-label{display:none} .brand{font-size:1.28rem} }
+
+/* ---------- Hero ---------- */
+.hero{padding-block:clamp(56px,9vw,104px) 0;position:relative}
+.hero-grid{display:grid;gap:28px;max-width:900px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.badges li{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:500;color:var(--ink-2);border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px;background:var(--surface)}
+.hero .sub{font-size:clamp(1.15rem,2vw,1.4rem);line-height:1.5;color:var(--ink);max-width:40ch}
+.hero .support{color:var(--ink-2);max-width:56ch}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.hero-shot{margin-top:clamp(48px,7vw,80px);position:relative}
+.hero-shot::before{content:"";position:absolute;inset:38% 0 0 0;background:var(--bg-alt);border-top:1px solid var(--line);z-index:-1}
+.hero-shot{isolation:isolate}
+
+/* Browser frame around real screenshots */
+.frame{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.frame-bar{display:flex;align-items:center;gap:12px;height:36px;padding-inline:14px;border-bottom:1px solid var(--line);background:var(--bg-alt)}
+.dots{display:flex;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--line-strong);display:block}
+.url{flex:1;max-width:340px;margin-inline:auto;font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shot{position:relative;aspect-ratio:1568/703;max-width:100%}
+.shot img{width:100%;height:100%;object-fit:cover}
+a.zoom{display:block;cursor:zoom-in}
+.callout-ring{position:absolute;left:47.4%;top:84.2%;width:5%;height:5.4%;border:2px solid var(--brand-orange);border-radius:8px;pointer-events:none}
+.callout{position:absolute;left:53.4%;top:83.6%;display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--bg);font-size:.82rem;font-weight:500;padding:6px 11px;border-radius:8px;text-decoration:none;white-space:nowrap;box-shadow:var(--shadow)}
+.callout:hover{text-decoration:underline}
+@media (max-width: 720px){ .callout{display:none} .url{display:none} }
+
+/* ---------- Problem ---------- */
+.problem-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(32px,6vw,80px);align-items:start}
+@media (max-width: 900px){ .problem-grid{grid-template-columns:1fr} }
+.problem-copy{display:grid;gap:20px}
+.problem-copy p{color:var(--ink-2);max-width:52ch}
+.problem-copy p strong{color:var(--ink);font-weight:600}
+
+.cronline{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:14px;padding:clamp(22px,3.4vw,36px);box-shadow:var(--shadow)}
+.cronline-label{font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--code-muted);margin-bottom:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cronline-code{font-family:'IBM Plex Mono',monospace;font-size:clamp(1rem,1.9vw,1.32rem);line-height:1.9;word-break:break-word}
+.cronline-code .m{white-space:nowrap;border-bottom:2px solid var(--code-accent);padding-bottom:1px;position:relative}
+.cronline-code .m sup,.cronline-notes .n{font-family:'IBM Plex Sans',sans-serif;font-size:.62rem;font-weight:600;display:inline-grid;place-items:center;width:1.5em;height:1.5em;border-radius:50%;background:var(--code-accent);color:#1a1020;vertical-align:super;margin-left:3px}
+.cronline-code .cmt{color:var(--code-muted);display:block;margin-top:6px}
+.cronline-notes{list-style:none;margin:26px 0 0;padding:22px 0 0;border-top:1px dashed #3a3860;display:grid;gap:12px;font-size:.96rem;color:#e4e2f2}
+.cronline-notes li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+.cronline-notes .n{vertical-align:baseline;margin:0;font-size:.7rem}
+
+/* comparison */
+.compare-wrap{margin-top:clamp(56px,8vw,88px)}
+.compare-wrap h3{font-size:clamp(1.3rem,2.2vw,1.6rem);margin-bottom:22px}
+table.compare{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:1rem}
+.compare th{font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:1.02rem;text-align:left;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--bg-alt)}
+.compare th:first-child{color:var(--ink-2)}
+.compare td{padding:16px 22px;border-bottom:1px solid var(--line);vertical-align:top}
+.compare tr:last-child td{border-bottom:0}
+.compare td:first-child{color:var(--ink-2);width:44%;border-right:1px solid var(--line)}
+.compare td:last-child{color:var(--ink);font-weight:500}
+.pills{display:inline-flex;flex-wrap:wrap;gap:6px;vertical-align:middle}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:500;padding:2px 8px;border-radius:6px;border:1px solid;white-space:nowrap}
+.pill svg{width:12px;height:12px}
+.pill.ok{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}
+.pill.fail{color:var(--fail);background:var(--fail-bg);border-color:var(--fail-line)}
+.pill.skip{color:var(--skip);background:var(--skip-bg);border-color:var(--skip-line)}
+@media (max-width: 640px){
+  table.compare,.compare tbody,.compare tr,.compare td{display:block;width:100%}
+  .compare thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .compare tr{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .compare tr:last-child{border-bottom:0}
+  .compare td{padding:0;border:0!important;width:auto!important}
+  .compare td::before{content:attr(data-label);display:block;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .compare td + td{margin-top:12px}
+  .compare td:last-child::before{color:var(--orange-ink)}
+}
+
+/* ---------- Tour ---------- */
+.tour{display:grid;gap:clamp(56px,8vw,96px)}
+.tour-item{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,4vw,56px);align-items:center}
+.tour-item.flip{grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
+.tour-item.flip .tour-text{order:2}
+.tour-text{display:grid;gap:14px}
+.tour-text h3{font-size:clamp(1.4rem,2.4vw,1.85rem)}
+.tour-text p{color:var(--ink-2)}
+.tour-text .detail{font-family:'IBM Plex Mono',monospace;font-size:.84rem;color:var(--muted);line-height:1.55;border-left:2px solid var(--brand-orange);padding-left:12px}
+.tour-pair{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3vw,40px)}
+.tour-pair .tour-text{margin-top:22px}
+@media (max-width: 900px){
+  .tour-item,.tour-item.flip{grid-template-columns:1fr}
+  .tour-item.flip .tour-text{order:0}
+  .tour-pair{grid-template-columns:1fr;gap:56px}
+}
+.video-frame video{width:100%;aspect-ratio:1568/702;background:var(--bg-alt)}
+
+/* ---------- How it works ---------- */
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;position:relative}
+.flow li{position:relative;padding-right:28px}
+.flow li:last-child{padding-right:0}
+.node{background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:18px;height:100%;display:grid;gap:8px;align-content:start;position:relative;z-index:1}
+.node.remote{border-style:dashed;background:transparent}
+.node .step{font-family:'IBM Plex Mono',monospace;font-size:.74rem;font-weight:500;color:var(--orange-ink)}
+.node h3{font-size:1.08rem}
+.node p{font-size:.9rem;color:var(--ink-2);line-height:1.5}
+.node code{white-space:normal!important;font-size:.8rem!important}
+.flow li:not(:last-child)::after{content:"";position:absolute;top:34px;right:6px;width:16px;height:2px;background:var(--line-strong)}
+.flow li:not(:last-child)::before{content:"";position:absolute;top:30px;right:5px;border:5px solid transparent;border-left:7px solid var(--line-strong);border-right:0;transform:translateX(6px)}
+.edge{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--muted);position:absolute;top:44px;right:-2px;writing-mode:initial;display:none}
+.loop{margin-top:26px;display:flex;align-items:center;gap:14px;font-family:'IBM Plex Mono',monospace;font-size:.84rem;color:var(--ink-2);flex-wrap:wrap}
+.loop svg{width:22px;height:22px;color:var(--orange-ink);flex:none}
+@media (max-width: 960px){
+  .flow{grid-template-columns:1fr;gap:26px}
+  .flow li{padding-right:0}
+  .flow li:not(:last-child)::after{top:auto;bottom:-20px;right:auto;left:28px;width:2px;height:14px}
+  .flow li:not(:last-child)::before{top:auto;bottom:-26px;right:auto;left:24px;border:5px solid transparent;border-top:7px solid var(--line-strong);border-bottom:0;transform:none}
+}
+
+/* ---------- Features ---------- */
+.features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:40px 32px;list-style:none;margin:0;padding:0}
+.features li{border-top:2px solid var(--ink);padding-top:18px;display:grid;gap:10px;align-content:start}
+.features li p{color:var(--ink-2);font-size:.97rem;line-height:1.55}
+@media (max-width: 1000px){ .features{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width: 560px){ .features{grid-template-columns:1fr;gap:30px} }
+
+/* ---------- Quick start ---------- */
+.qs-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:clamp(28px,4vw,56px);align-items:start}
+@media (max-width: 900px){ .qs-grid{grid-template-columns:1fr} }
+.terminal{background:var(--code-bg);color:var(--code-ink);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.terminal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px 10px 18px;border-bottom:1px solid #2b2950;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--code-muted)}
+.copy-btn{font:500 .78rem/1 'IBM Plex Mono',monospace;color:var(--code-ink);background:transparent;border:1px solid #3a3860;border-radius:7px;padding:7px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.copy-btn:hover{border-color:#6d6a99}
+.copy-btn svg{width:14px;height:14px}
+.terminal pre{margin:0;padding:20px 22px 24px;overflow-x:auto;font-size:.92rem;line-height:1.75;tab-size:4}
+.terminal .c{color:var(--code-muted)}
+.terminal .p{color:var(--code-accent);user-select:none}
+.qs-side{display:grid;gap:26px}
+.qs-side h3{font-size:1.05rem;margin-bottom:8px}
+.qs-side p,.qs-side li{color:var(--ink-2);font-size:.97rem}
+.qs-side ul{margin:0;padding-left:1.1em;display:grid;gap:4px}
+.note{border:1px dashed var(--line-strong);border-radius:12px;padding:16px 18px}
+.tag{display:inline-block;justify-self:start;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--orange-ink);border:1px solid currentColor;border-radius:5px;padding:1px 7px;margin-bottom:10px}
+
+/* ---------- Story ---------- */
+.story-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,88px);align-items:start}
+@media (max-width: 900px){ .story-grid{grid-template-columns:1fr} }
+.story-copy{display:grid;gap:22px;font-size:1.08rem}
+.story-copy p{color:var(--ink-2);max-width:60ch}
+.pull{font-family:'Familjen Grotesk',sans-serif;font-weight:600;font-size:clamp(1.5rem,2.8vw,2.1rem);line-height:1.2;letter-spacing:-.02em;color:var(--ink);margin:6px 0;max-width:24ch;text-wrap:balance}
+.byline{display:flex;align-items:center;gap:14px;margin-top:8px}
+.avatar{width:56px;height:56px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--cream);color:var(--navy);font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:1.1rem;border:1px solid var(--line-strong);overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.byline strong{display:block;color:var(--ink)}
+.byline span{color:var(--muted);font-size:.92rem}
+.talk{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:clamp(22px,3vw,30px);display:grid;gap:14px}
+.talk .kicker{font-family:'IBM Plex Mono',monospace;font-size:.76rem;color:var(--muted)}
+.talk h3{font-size:1.28rem}
+.mistakes{margin:4px 0 0;padding:0;list-style:none;counter-reset:m;display:grid;gap:0}
+.mistakes li{counter-increment:m;display:grid;grid-template-columns:2.2em 1fr;padding:9px 0;border-top:1px solid var(--line);font-size:.97rem;color:var(--ink-2)}
+.mistakes li::before{content:counter(m,decimal-leading-zero);font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--muted);padding-top:2px}
+.mistakes li.hot{color:var(--ink);font-weight:500}
+.mistakes li.hot::before{color:var(--orange-ink)}
+
+/* ---------- Coming next ---------- */
+.next-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width: 900px){ .next-grid{grid-template-columns:1fr} }
+.next-card{border:1px dashed var(--line-strong);border-radius:14px;padding:24px;display:grid;gap:10px;align-content:start}
+.next-card p{color:var(--ink-2);font-size:.97rem}
+.next-card.first{border:1px solid var(--brand-orange);background:var(--surface)}
+.next-foot{margin-top:28px;color:var(--ink-2)}
+
+/* ---------- Cloud waitlist ---------- */
+.cloud{background:var(--band-bg);color:var(--band-ink)}
+.cloud .eyebrow{color:#ffb08f}
+.cloud-grid{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:clamp(32px,6vw,80px);align-items:center}
+@media (max-width: 900px){ .cloud-grid{grid-template-columns:1fr} }
+.cloud h2{color:var(--band-ink)}
+.cloud .lede{color:var(--band-muted);margin-top:18px}
+.waitlist{background:rgba(255,255,255,.06);border:1px solid var(--band-line);border-radius:16px;padding:clamp(22px,3vw,30px);display:grid;gap:14px}
+.waitlist label{font-weight:600;font-size:.95rem}
+.field-row{display:flex;gap:10px;flex-wrap:wrap}
+.waitlist input[type=email]{flex:1 1 220px;min-width:0;font:400 1rem 'IBM Plex Sans',system-ui,sans-serif;color:#1c1a3a;background:#fff;border:2px solid transparent;border-radius:10px;padding:13px 14px}
+.waitlist input[type=email]:focus{outline:none;border-color:#c4a4ff}
+.waitlist input[aria-invalid=true]{border-color:#ff8f8f}
+.waitlist .btn-join{background:var(--cream);color:#1c1a3a;flex:0 0 auto}
+.waitlist .btn-join:hover{background:#fff}
+.waitlist .btn-join[disabled]{opacity:.7;cursor:progress}
+.fine{font-size:.86rem;color:var(--band-muted)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.form-msg{font-size:.95rem;border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.form-msg svg{width:18px;height:18px;flex:none;margin-top:2px}
+.form-msg.ok{background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.45);color:#dcfce7}
+.form-msg.err{background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.5);color:#fee2e2}
+.success-state{display:grid;gap:10px}
+.success-state h3{font-size:1.3rem;color:var(--band-ink)}
+.success-state p{color:var(--band-muted)}
+.linkish{background:none;border:0;padding:0;font:inherit;color:#ffd2bf;text-decoration:underline;cursor:pointer;justify-self:start}
+
+
+/* ---------- Lightbox ---------- */
+.lightbox{width:min(1400px,calc(100vw - 32px));max-width:none;max-height:calc(100vh - 32px);padding:0;border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);overflow:hidden}
+.lightbox::backdrop{background:rgba(8,7,15,.82)}
+.lb-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 10px 10px 18px;border-bottom:1px solid var(--line)}
+.lb-cap{font-size:.92rem;color:var(--ink-2);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-close{display:inline-flex;align-items:center;gap:8px;flex:none;font:600 .92rem/1 'IBM Plex Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg-alt);border:1px solid var(--line-strong);border-radius:9px;padding:10px 14px;cursor:pointer}
+.lb-close:hover{border-color:var(--ink-2)}
+.lb-close svg{width:14px;height:14px}
+.lb-close kbd{font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.lb-body{overflow:auto;max-height:calc(100vh - 32px - 60px);background:var(--bg-alt)}
+.lb-body img{width:100%;height:auto}
+@media (max-width: 640px){ .lb-close kbd{display:none} }
+
+/* ---------- Footer ---------- */
+.site-footer{padding-block:48px;border-top:1px solid var(--line)}
+.footer-inner{display:flex;flex-wrap:wrap;gap:20px 36px;align-items:center;justify-content:space-between}
+.footer-links{display:flex;flex-wrap:wrap;gap:10px 26px;list-style:none;margin:0;padding:0}
+.footer-links a{color:var(--ink-2);text-decoration:none;font-size:.94rem}
+.footer-links a:hover{color:var(--ink);text-decoration:underline}
+.footer-meta{color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- Paper-plane mark, reused via <use> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="plane" viewBox="0 170 1024 680"><path fill="#f4400d" fill-rule="evenodd" d="M1022 185 1 399 233 580 232 833 417 711 357 652 610 833ZM925 250 366 607 273 762 277 563Z"/></symbol>
+  <symbol id="gh" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 8.5 6.5 12 13 4.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-skip" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 3.5v9l7-4.5z"/><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M13 3.5v9"/></symbol>
+</svg>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="#top" aria-label="Cron Pilot, home">
+      <svg viewBox="0 170 1024 680" aria-hidden="true"><use href="#plane"/></svg>
+      <span>Cron Pilot</span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#quick-start">Quick start</a>
+      <a href="#cloud">Cloud waitlist</a>
+    </nav>
+    <div class="header-actions">
+      <a class="gh-link" href="https://github.com/cronpilot/cronpilot">
+        <svg aria-hidden="true"><use href="#gh"/></svg>
+        <span class="gh-label">GitHub</span>
+        <!-- Star count: filled in by main script only if SHOW_STAR_COUNT is true. -->
+        <span class="gh-stars" data-stars hidden></span>
+      </a>
+      <button class="icon-btn" type="button" id="theme-toggle" aria-label="Switch colour theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></svg>
+      </button>
+      <details class="menu">
+        <summary class="icon-btn" aria-label="Menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <div class="menu-panel">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#quick-start">Quick start</a>
+          <a href="#story">Why I built it</a>
+          <a href="#cloud">Cloud waitlist</a>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="hero-grid">
+      <ul class="badges" aria-label="Project facts">
+        <li>Open source</li><li>Self-hosted</li><li>MIT</li>
+      </ul>
+      <h1>Your scheduled jobs shouldn't be invisible.</h1>
+      <p class="sub">Cron Pilot is an open-source, self-hosted control panel for scheduling, running and monitoring jobs on your servers.</p>
+      <p class="support">Stop SSHing into production to edit crontabs, hunt through logs, and figure out why last night's job failed.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/cronpilot/cronpilot">
+          <svg aria-hidden="true"><use href="#gh"/></svg> View on GitHub
+        </a>
+        <a class="btn btn-secondary" href="#quick-start">Quick start</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-shot">
+    <div class="wrap">
+      <div class="frame">
+        <div class="frame-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">cron.acme.test/tasks</span></div>
+        <div class="shot">
+          <img class="theme-light" src="assets/01-task-list-light.jpg" width="1568" height="703" fetchpriority="high"
+               alt="Cron Pilot task list for the Acme tenant. Seven tasks, all active: Customer import, Invoice sync, Database backup, Renew TLS certificates, Clean up temp files, Weekly reports and Trial reminder emails. Each shows a paused toggle, last run status, next run time and a readable schedule such as Hourly or Weekly on Monday. Weekly reports shows a red Failed badge.">
+          <img class="theme-dark" src="assets/02-task-list-dark.jpg" width="1568" height="703" loading="lazy"
+               alt="The same Cron Pilot task list in dark mode. Weekly reports shows a red Failed badge; every other task's last run was successful.">
+          <span class="callout-ring" aria-hidden="true"></span>
+          <a class="callout" href="#tour">Monday's report failed. Here's why ↓</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROBLEM ================= -->
+<section class="section band" id="problem" aria-labelledby="problem-h">
+  <div class="wrap">
+    <div class="problem-grid">
+      <div class="problem-copy">
+        <span class="eyebrow"># the problem</span>
+        <h2 id="problem-h">Cron runs your jobs. It doesn't help you look after them.</h2>
+        <p>A job that processed recurring donations stopped running. <strong>Nobody noticed for three days.</strong> By then, hundreds of thousands of dollars in donations had been missed.</p>
+        <p>Cron itself was fine. The job failed silently, on a server nobody was watching, with its output going nowhere.</p>
+      </div>
+      <figure class="cronline" aria-labelledby="cronline-cap">
+        <div class="cronline-label"><span id="cronline-cap">$ crontab -l</span><span>a line you've probably written</span></div>
+        <div class="cronline-code">
+          <span class="m">0 2 * * *<sup>1</sup></span> cd /var/www/app &amp;&amp; php artisan donations:process <span class="m">&gt;/dev/null 2&gt;&amp;1<sup>2</sup></span>
+          <span class="cmt"># last successful run: <span class="m" style="border-color:var(--code-muted)">unknown<sup>3</sup></span></span>
+        </div>
+        <ol class="cronline-notes">
+          <li><span class="n">1</span><span>2 AM in the server's timezone. Hopefully the one you meant.</span></li>
+          <li><span class="n">2</span><span>Output and errors, discarded. The exit status goes nowhere either.</span></li>
+          <li><span class="n">3</span><span>When it stops running, nothing tells you. You find out from a support ticket.</span></li>
+        </ol>
+      </figure>
+    </div>
+
+    <div class="compare-wrap">
+      <h3>What changes when you stop managing jobs by hand</h3>
+      <table class="compare">
+        <thead><tr><th scope="col">With crontab</th><th scope="col">With Cron Pilot</th></tr></thead>
+        <tbody>
+          <tr><td data-label="With crontab">SSH into each server to edit jobs</td><td data-label="With Cron Pilot">Manage every job from one web UI</td></tr>
+          <tr><td data-label="With crontab">Hand-write <code>*/15 9-17 * * 1-5</code></td><td data-label="With Cron Pilot">Build schedules visually and preview the next runs</td></tr>
+          <tr><td data-label="With crontab"><code>grep</code> through logs for output</td><td data-label="With Cron Pilot">Every run's output, exit status and duration, kept</td></tr>
+          <tr><td data-label="With crontab">"Did that actually run last night?"</td><td data-label="With Cron Pilot"><span class="pills"><span class="pill ok"><svg aria-hidden="true"><use href="#i-check"/></svg>Successful</span><span class="pill fail"><svg aria-hidden="true"><use href="#i-x"/></svg>Failed</span><span class="pill skip"><svg aria-hidden="true"><use href="#i-skip"/></svg>Skipped</span></span> at a glance</td></tr>
+          <tr><td data-label="With crontab">Wait for the schedule to test a job</td><td data-label="With Cron Pilot">Run it now</td></tr>
+          <tr><td data-label="With crontab">Comment out a line to stop a job</td><td data-label="With Cron Pilot">Pause and resume with a toggle</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TOUR ================= -->
+<section class="section" id="tour" aria-labelledby="tour-h">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"># the product</span>
+      <h2 id="tour-h">See what happened on every run.</h2>
+      <p class="lede">These are real screenshots from the demo data. Nothing here is a mockup.</p>
+    </div>
+
+    <div class="tour">
+      <article class="tour-item">
+        <div class="tour-text">
+          <h3>See exactly what went wrong.</h3>
+          <p>Every run keeps its full output and exit status. No SSH, no <code>grep</code>, no guessing which server wrote the log.</p>
+          <p class="detail">SQLSTATE[HY000]: General error: 1021 Disk full<br>Command failed with exit status: 1<br>Run duration: 41 seconds</p>
+        </div>
+        <div class="frame">
+          <div class="frame-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">cron.acme.test/runs/…</span></div>
+          <a class="shot zoom" href="assets/03-failed-run-output-light.jpg" aria-label="Enlarge the failed run screenshot" data-caption="Failed run output: Weekly reports">
+            <img class="theme-light" src="assets/03-failed-run-output-light.jpg" width="1568" height="703" loading="lazy"
+                 alt="View Run page for the Weekly reports task. Status Failed, run duration 41 seconds. The output shows 'Building revenue report... done (4 charts)', then 'Building usage report...' followed by an Illuminate Database QueryException: SQLSTATE HY000 General error 1021 Disk full, and '[ERROR] Command failed with exit status: 1'.">
+            <img class="theme-dark" src="assets/04-failed-run-output-dark.jpg" width="1568" height="703" loading="lazy"
+                 alt="The same failed Weekly reports run in dark mode, showing the Disk full SQL error and exit status 1.">
+          </a>
+        </div>
+      </article>
+
+      <div class="tour-pair">
+        <article>
+          <div class="frame">
+            <div class="frame-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">cron.acme.test/runs</span></div>
+            <a class="shot zoom" href="assets/05-run-history-light.jpg" aria-label="Enlarge the run history screenshot" data-caption="Run history">
+              <img class="theme-light" src="assets/05-run-history-light.jpg" width="1568" height="703" loading="lazy"
+                   alt="Runs list. Customer import runs every 15 minutes: one Running, several Successful with durations between 6 and 18 minutes, and one Skipped at 20:39 with a duration of 0 seconds. An Invoice sync run finished successfully in 5 seconds.">
+              <img class="theme-dark" src="assets/06-run-history-dark.jpg" width="1568" height="703" loading="lazy"
+                   alt="The same runs list in dark mode, with Running, Successful and Skipped statuses and durations.">
+            </a>
+          </div>
+          <div class="tour-text">
+            <h3>Know what ran.</h3>
+            <p>Running, Successful, Failed and Skipped, with start times and durations. That 20:39 Skipped is the overlap guard at work: the previous import was still going.</p>
+          </div>
+        </article>
+        <article>
+          <div class="frame">
+            <div class="frame-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">cron.acme.test/tasks/…/edit</span></div>
+            <a class="shot zoom" href="assets/07-schedule-builder-light.jpg" aria-label="Enlarge the schedule builder screenshot" data-caption="Schedule builder">
+              <img class="theme-light" src="assets/07-schedule-builder-light.jpg" width="1568" height="703" loading="lazy"
+                   alt="Schedule builder for Trial reminder emails. Frequency Weekly, every 1 week, by weekday: Monday to Friday. Start date January 5, 2026 at 9:00, timezone Eastern Time (New York). Upcoming run times: Monday, Tuesday and Wednesday, September 28 to 30, 2026, at 9:00 AM. Rrule preview: FREQ=WEEKLY;DTSTART=20260105T090000;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR.">
+              <img class="theme-dark" src="assets/08-schedule-builder-dark.jpg" width="1568" height="703" loading="lazy"
+                   alt="The same schedule builder in dark mode: weekly on Monday to Friday at 9:00 AM Eastern Time, with the next three run times and the Rrule preview.">
+            </a>
+          </div>
+          <div class="tour-text">
+            <h3>Schedule visually.</h3>
+            <p>Weekdays at 9:00 AM, New York time, with the next runs previewed as you edit. No more squinting at <code>0 9 * * 1-5</code> and hoping.</p>
+          </div>
+        </article>
+      </div>
+
+      <article class="tour-item flip">
+        <div class="frame video-frame">
+          <div class="frame-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="url">cron.acme.test</span></div>
+          <video class="tour-video theme-light" muted loop playsinline controls preload="none" poster="assets/tour-poster.jpg" width="1568" height="702"
+                 aria-label="Screen recording: from the task list, open the failed Weekly reports task, then its failed run to read the Disk full error.">
+            <source src="assets/tour.mp4" type="video/mp4">
+          </video>
+          <video class="tour-video theme-dark" muted loop playsinline controls preload="none" poster="assets/tour-dark-poster.jpg" width="1568" height="702"
+                 aria-label="Screen recording in dark mode: from the task list, open the failed Weekly reports task, then its failed run to read the Disk full error.">
+            <source src="assets/tour-dark.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="tour-text">
+          <h3>Red badge to stack trace in two clicks.</h3>
+          <p>Task list, then the failed task, then its run output. That's the whole investigation.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="section band" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"># how it works</span>
+      <h2 id="how-h">A scheduler, a queue, and your servers.</h2>
+      <p class="lede">Cron Pilot is a Laravel app. Two long-running processes do the work, and everything they see ends up in the run history.</p>
+    </div>
+    <ol class="flow">
+      <li><div class="node"><span class="step">1 · every minute</span><h3>Scheduler</h3><p><code>schedule:work</code> checks which tasks are due.</p></div></li>
+      <li><div class="node"><span class="step">2 · queue</span><h3>Queue</h3><p>Due tasks are queued. If the last run is still going, the new one is recorded as Skipped.</p></div></li>
+      <li><div class="node"><span class="step">3 · worker</span><h3>Worker</h3><p><code>queue:work</code> picks up the job and connects over SSH with the task's credentials.</p></div></li>
+      <li><div class="node remote"><span class="step">4 · your infrastructure</span><h3>Your server</h3><p>The command runs where it always did. Nothing to install on it.</p></div></li>
+      <li><div class="node"><span class="step">5 · stored</span><h3>Run history</h3><p>Output, exit status and duration come back and are kept with the run.</p></div></li>
+    </ol>
+    <p class="loop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4"/></svg>
+      Then the scheduler checks again a minute later.
+    </p>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section class="section" id="features" aria-labelledby="features-h">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"># features</span>
+      <h2 id="features-h">What it does today.</h2>
+      <p class="lede">This list is what ships in the repo right now. Planned work is further down, labelled as such.</p>
+    </div>
+    <ul class="features">
+      <li><h3>Visual schedule builder</h3><p>Every second to once a year, specific weekdays, "the second Tuesday", start and end dates, and a timezone per task. A 9 AM task stays at 9 AM through daylight saving changes.</p></li>
+      <li><h3>Runs on your servers</h3><p>Tasks run over SSH with credentials you choose per task. Private keys and passphrases are stored encrypted.</p></li>
+      <li><h3>Run history</h3><p>The output, exit status and duration of every run, kept and searchable from the UI.</p></li>
+      <li><h3>Run now</h3><p>Trigger any task on demand. You get a warning if it's already running.</p></li>
+      <li><h3>No accidental overlaps</h3><p>A task never runs twice at once unless you allow it. A run that comes due mid-run is recorded as Skipped instead of piling up.</p></li>
+      <li><h3>Pause and resume</h3><p>One toggle in the task list. A resumed task waits for its next scheduled time rather than firing immediately.</p></li>
+      <li><h3>Tenants</h3><p>Keep teams, clients or projects apart, each with its own servers, credentials, tasks and history.</p></li>
+      <li><h3>Open source, self-hosted</h3><p>MIT licensed. Commands, output and credentials stay on your own infrastructure.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= QUICK START ================= -->
+<section class="section band" id="quick-start" aria-labelledby="qs-h">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"># quick start</span>
+      <h2 id="qs-h">Running tonight.</h2>
+      <p class="lede">It's a standard Laravel app. If you've deployed one before, you know most of this already.</p>
+    </div>
+    <div class="qs-grid">
+      <div class="terminal">
+        <div class="terminal-bar"><span>bash</span>
+          <button class="copy-btn" type="button" data-copy="#qs-code">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 10.5V3.8C3 3.1 3.6 2.5 4.3 2.5H10.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+            <span data-copy-label>Copy</span>
+          </button>
+        </div>
+<pre id="qs-code"><code>git clone https://github.com/cronpilot/cronpilot.git
+cd cronpilot
+composer install
+npm install &amp;&amp; npm run build
+cp .env.example .env        <span class="c"># then set your DB_* values</span>
+php artisan key:generate
+php artisan migrate
+
+<span class="c"># Cron Pilot needs both of these running:</span>
+php artisan schedule:work   <span class="c"># checks for due tasks every minute</span>
+php artisan queue:work      <span class="c"># runs them</span></code></pre>
+      </div>
+      <div class="qs-side">
+        <div>
+          <h3>Requirements</h3>
+          <ul><li>PHP 8.4+</li><li>Composer</li><li>Node.js 18+</li><li>MySQL or MariaDB</li></ul>
+        </div>
+        <div>
+          <h3>Want something to click on?</h3>
+          <p><code>php artisan db:seed --class=DemoSeeder</code> creates a fictional "Acme" tenant with realistic tasks and a week of run history. It's what the screenshots above show.</p>
+        </div>
+        <div class="note">
+          <span class="tag">Coming next</span>
+          <p>A one-command Docker install (<code>docker compose up -d</code>) is on the roadmap. It isn't here yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STORY ================= -->
+<section class="section" id="story" aria-labelledby="story-h">
+  <div class="wrap">
+    <div class="story-grid">
+      <div class="story-copy">
+        <span class="eyebrow"># why I built it</span>
+        <h2 id="story-h">Cron isn't evil. We just keep making the same mistakes with it.</h2>
+        <p>I've run production scheduled jobs for years. The one I remember is a job that processed recurring donations. It stopped running, and nobody noticed for three days. We found out when someone contacted support. By then, hundreds of thousands of dollars in donations had been missed.</p>
+        <p>Nothing was wrong with cron. The job failed silently, on a server nobody was watching, with its output going nowhere.</p>
+        <p class="pull">Cron runs your jobs, but it doesn't help you look after them.</p>
+        <p>I turned what I learned into a conference talk about the mistakes teams keep making. Cron Pilot is the tool built from those lessons.</p>
+        <div class="byline">
+          <span class="avatar"><img src="assets/peter-meth.jpg" alt="" width="56" height="56" loading="lazy" decoding="async"></span>
+          <div><strong>Peter Meth</strong><span>Software architect, Cron Pilot maintainer</span></div>
+        </div>
+      </div>
+      <aside class="talk" aria-labelledby="talk-h">
+        <span class="kicker">Conference talk · slides on SlideShare</span>
+        <h3 id="talk-h">Cron Jobs Gone Wrong: The Top Mistakes That Keep Your Tasks From Ticking</h3>
+        <ol class="mistakes">
+          <li>Bad syntax and paths</li>
+          <li class="hot">Silent failures</li>
+          <li>Crons in the wrong language</li>
+          <li>Skipping the development lifecycle</li>
+          <li>Resource depletion</li>
+          <li>File problems</li>
+          <li>Overlapping jobs</li>
+        </ol>
+        <a href="https://www.slideshare.net/slideshow/cron-jobs-gone-wrong-the-top-mistakes-that-keep-your-tasks-from-ticking/279478111">View the slides →</a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COMING NEXT ================= -->
+<section class="section band" id="next" aria-labelledby="next-h">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow"># coming next</span>
+      <h2 id="next-h">Not built yet. Being built.</h2>
+      <p class="lede">None of these are in the current release. They're listed so you know where the project is going.</p>
+    </div>
+    <div class="next-grid">
+      <article class="next-card first">
+        <span class="tag">Next up</span>
+        <h3>Failure alerts</h3>
+        <p>Email and chat alerts when a job fails, or when it doesn't run at all. This is the lesson of the donations job, and the most important thing on the list.</p>
+      </article>
+      <article class="next-card">
+        <span class="tag">Planned</span>
+        <h3>One-command Docker install</h3>
+        <p><code>docker compose up -d</code> and you're done. No PHP or Node on the host.</p>
+      </article>
+      <article class="next-card">
+        <span class="tag">Planned</span>
+        <h3>Cron Pilot Agent</h3>
+        <p>A small open-source agent on each server that connects out to Cron Pilot, so Cron Pilot never holds SSH credentials.</p>
+      </article>
+    </div>
+    <p class="next-foot">Follow along, or help out, on <a href="https://github.com/cronpilot/cronpilot">GitHub</a>.</p>
+  </div>
+</section>
+
+<!-- ================= CLOUD WAITLIST ================= -->
+<section class="section cloud" id="cloud" aria-labelledby="cloud-h">
+  <div class="wrap cloud-grid">
+    <div>
+      <span class="eyebrow"># cron pilot cloud · waitlist</span>
+      <h2 id="cloud-h">A hosted Cron Pilot is coming.</h2>
+      <p class="lede">Same open-source core, no servers to run. It doesn't exist yet. Join the waitlist and we'll tell you when it does.</p>
+    </div>
+
+    <!--
+      WAITLIST FORM
+      The backend isn't chosen yet. Set WAITLIST_ENDPOINT in the script at the bottom of this page.
+      The script POSTs JSON { email } and treats any 2xx response as success.
+      While the endpoint is empty, the form runs in preview mode: submissions are simulated,
+      and an address containing "fail" (e.g. fail@example.com) shows the error state.
+    -->
+    <div class="waitlist" id="waitlist">
+      <form id="waitlist-form" novalidate>
+        <div style="display:grid;gap:12px">
+          <label for="wl-email">Email address</label>
+          <div class="field-row">
+            <input type="email" id="wl-email" name="email" autocomplete="email" inputmode="email" placeholder="you@company.com" required aria-describedby="wl-fine wl-msg">
+            <button class="btn btn-join" type="submit" id="wl-submit">Join the waitlist</button>
+          </div>
+          <div class="hp" aria-hidden="true"><label for="wl-company">Leave this empty</label><input type="text" id="wl-company" name="company" tabindex="-1" autocomplete="off"></div>
+          <p class="fine" id="wl-fine">This is a waitlist for a product that isn't available yet. We'll only email you about the Cloud launch.</p>
+          <div id="wl-msg" role="status" aria-live="polite"></div>
+        </div>
+      </form>
+      <div class="success-state" id="waitlist-success" hidden tabindex="-1">
+        <div class="form-msg ok"><svg aria-hidden="true"><use href="#i-check"/></svg><span>You're on the waitlist.</span></div>
+        <h3>Thanks. That's it.</h3>
+        <p>We'll send one email to <strong id="wl-done-email"></strong> when Cron Pilot Cloud launches. Until then, the self-hosted version is on <a href="https://github.com/cronpilot/cronpilot" style="color:#ffd2bf">GitHub</a>.</p>
+        <button type="button" class="linkish" id="wl-reset">Use a different address</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <a class="brand" href="#top" aria-label="Cron Pilot, back to top">
+      <svg viewBox="0 170 1024 680" aria-hidden="true"><use href="#plane"/></svg>
+      <span>Cron Pilot</span>
+    </a>
+    <ul class="footer-links">
+      <li><a href="https://github.com/cronpilot/cronpilot">GitHub</a></li>
+      <li><a href="https://github.com/cronpilot/cronpilot/blob/main/LICENSE">MIT license</a></li>
+      <li><a href="https://www.slideshare.net/slideshow/cron-jobs-gone-wrong-the-top-mistakes-that-keep-your-tasks-from-ticking/279478111">The talk</a></li>
+      <li><a href="#cloud">Cloud waitlist</a></li>
+    </ul>
+    <p class="footer-meta">© <span id="year">2026</span> Peter Meth · No tracking on this site.</p>
+  </div>
+</footer>
+
+
+<dialog class="lightbox" id="lightbox" aria-labelledby="lb-cap">
+  <div class="lb-bar">
+    <p class="lb-cap" id="lb-cap">Screenshot</p>
+    <button type="button" class="lb-close" id="lb-close">
+      <svg aria-hidden="true"><use href="#i-x"/></svg> Close <kbd>Esc</kbd>
+    </button>
+  </div>
+  <div class="lb-body"><img id="lb-img" src="data:," alt=""></div>
+</dialog>
+
+<script>
+(function () {
+  /* ---------- Config ---------- */
+  var WAITLIST_ENDPOINT = '';      // TODO: set to your waitlist provider's endpoint (Buttondown, ConvertKit, Formspree...)
+  var SHOW_STAR_COUNT = false;     // set true to show the GitHub star count in the header (one call to api.github.com)
+
+  var root = document.documentElement;
+
+  /* ---------- Theme toggle ---------- */
+  var toggle = document.getElementById('theme-toggle');
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  toggle.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('cp-theme', next); } catch (e) {}
+  });
+
+  /* ---------- Close mobile menu on navigation ---------- */
+  var menu = document.querySelector('.menu');
+  menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { menu.open = false; }); });
+
+  /* ---------- Copy button ---------- */
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.querySelector(btn.getAttribute('data-copy'));
+      var text = el.innerText.replace(/\n+$/, '');
+      var label = btn.querySelector('[data-copy-label]');
+      function done(msg) { label.textContent = msg; setTimeout(function () { label.textContent = 'Copy'; }, 1800); }
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(el);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        done('Selected, press ⌘C');
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done('Copied'); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+
+  /* ---------- Screenshot lightbox (shows the image for the current theme) ---------- */
+  var lb = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var lbCap = document.getElementById('lb-cap');
+  if (lb && typeof lb.showModal === 'function') {
+    document.querySelectorAll('a.zoom').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var imgs = a.querySelectorAll('img'), img = imgs[0];
+        for (var i = 0; i < imgs.length; i++) { if (imgs[i].offsetParent !== null) { img = imgs[i]; break; } }
+        lbImg.src = img.currentSrc || img.src;
+        lbImg.alt = img.alt;
+        lbCap.textContent = a.getAttribute('data-caption') || 'Screenshot';
+        lb.showModal();
+        document.getElementById('lb-close').focus();
+      });
+    });
+    document.getElementById('lb-close').addEventListener('click', function () { lb.close(); });
+    lb.addEventListener('click', function (e) { if (e.target === lb) lb.close(); });
+  }
+
+  /* ---------- Tour video: play the one matching the theme, when visible, unless reduced motion ---------- */
+  var videos = Array.prototype.slice.call(document.querySelectorAll('.tour-video'));
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var videoInView = false;
+  function syncVideos() {
+    videos.forEach(function (v) {
+      var shown = v.offsetParent !== null;
+      if (shown && videoInView && !reduce) { v.preload = 'auto'; var p = v.play(); if (p) p.catch(function () {}); }
+      else if (!v.paused) { v.pause(); }
+    });
+  }
+  if (videos.length && 'IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      videoInView = entries.some(function (e) { return e.isIntersecting && e.target.offsetParent !== null; });
+      syncVideos();
+    }, { threshold: 0.4 });
+    videos.forEach(function (v) { io.observe(v); });
+  }
+  toggle.addEventListener('click', function () { setTimeout(syncVideos, 0); });
+  if (window.matchMedia) { var mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', syncVideos); }
+  new MutationObserver(function () { setTimeout(syncVideos, 0); }).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ---------- Optional star count ---------- */
+  if (SHOW_STAR_COUNT) {
+    fetch('https://api.github.com/repos/cronpilot/cronpilot').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d || typeof d.stargazers_count !== 'number') return;
+      var n = d.stargazers_count, el = document.querySelector('[data-stars]');
+      el.textContent = n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+      el.setAttribute('aria-label', n + ' stars'); el.hidden = false;
+    }).catch(function () {});
+  }
+
+  /* ---------- Waitlist form ---------- */
+  var form = document.getElementById('waitlist-form');
+  var email = document.getElementById('wl-email');
+  var submit = document.getElementById('wl-submit');
+  var msg = document.getElementById('wl-msg');
+  var success = document.getElementById('waitlist-success');
+  var ICON_X = '<svg aria-hidden="true"><use href="#i-x"/></svg>';
+
+  function showError(text) {
+    msg.innerHTML = '<div class="form-msg err">' + ICON_X + '<span></span></div>';
+    msg.querySelector('span').textContent = text;
+  }
+  function clearError() { msg.innerHTML = ''; email.removeAttribute('aria-invalid'); }
+  function setBusy(b) { submit.disabled = b; submit.textContent = b ? 'Joining…' : 'Join the waitlist'; }
+
+  email.addEventListener('input', function () { if (email.getAttribute('aria-invalid')) clearError(); });
+
+  function send(address) {
+    if (!WAITLIST_ENDPOINT) {
+      // Preview mode: no backend yet.
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () { /fail/i.test(address) ? reject(new Error('preview')) : resolve(); }, 700);
+      });
+    }
+    return fetch(WAITLIST_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ email: address })
+    }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); });
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var address = email.value.trim();
+    if (document.getElementById('wl-company').value) return; // bot
+    if (!address || !email.checkValidity() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      email.setAttribute('aria-invalid', 'true');
+      showError(address ? 'That doesn’t look like an email address. Try something like you@company.com.' : 'Enter your email address to join the waitlist.');
+      email.focus();
+      return;
+    }
+    clearError(); setBusy(true);
+    send(address).then(function () {
+      document.getElementById('wl-done-email').textContent = address;
+      form.hidden = true; success.hidden = false; success.focus();
+    }).catch(function () {
+      showError('We couldn’t add you just now. Your address wasn’t saved. Please try again in a minute.');
+    }).then(function () { setBusy(false); });
+  });
+
+  document.getElementById('wl-reset').addEventListener('click', function () {
+    success.hidden = true; form.hidden = false; form.reset(); clearError(); email.focus();
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+})();
+</script>
+</body>
+</html>
