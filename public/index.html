@@ -760,10 +760,10 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
 
     <!--
       WAITLIST FORM
-      The backend isn't chosen yet. Set WAITLIST_ENDPOINT in the script at the bottom of this page.
-      The script POSTs JSON { email } and treats any 2xx response as success.
-      While the endpoint is empty, the form runs in preview mode: submissions are simulated,
-      and an address containing "fail" (e.g. fail@example.com) shows the error state.
+      The script POSTs JSON { email, company } to WAITLIST_ENDPOINT (functions/api/waitlist.js), which
+      emails a confirmation link. The address only joins the list once that link is confirmed.
+      Set WAITLIST_ENDPOINT to '' to preview the form without a backend: an address containing "fail"
+      (e.g. fail@example.com) then shows the error state.
     -->
     <div class="waitlist" id="waitlist">
       <form id="waitlist-form" novalidate>
@@ -779,9 +779,9 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
         </div>
       </form>
       <div class="success-state" id="waitlist-success" hidden tabindex="-1">
-        <div class="form-msg ok"><svg aria-hidden="true"><use href="#i-check"/></svg><span>You're on the waitlist.</span></div>
-        <h3>Thanks. That's it.</h3>
-        <p>We'll send one email to <strong id="wl-done-email"></strong> when Cron Pilot Cloud launches. Until then, the self-hosted version is on <a href="https://github.com/cronpilot/cronpilot" style="color:#ffd2bf">GitHub</a>.</p>
+        <div class="form-msg ok"><svg aria-hidden="true"><use href="#i-check"/></svg><span>Check your inbox.</span></div>
+        <h3>One more step.</h3>
+        <p>We've sent a confirmation link to <strong id="wl-done-email"></strong>. Click it to join the waitlist. After that, we'll only email you when Cron Pilot Cloud launches. Until then, the self-hosted version is on <a href="https://github.com/cronpilot/cronpilot" style="color:#ffd2bf">GitHub</a>.</p>
         <button type="button" class="linkish" id="wl-reset">Use a different address</button>
       </div>
     </div>
@@ -820,7 +820,7 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
 <script>
 (function () {
   /* ---------- Config ---------- */
-  var WAITLIST_ENDPOINT = '';      // TODO: set to your waitlist provider's endpoint (Buttondown, ConvertKit, Formspree...)
+  var WAITLIST_ENDPOINT = '/api/waitlist';  // functions/api/waitlist.js sends a confirmation email
   var SHOW_STAR_COUNT = false;     // set true to show the GitHub star count in the header (one call to api.github.com)
 
   var root = document.documentElement;
@@ -941,7 +941,7 @@ php artisan queue:work      <span class="c"># runs them</span></code></pre>
     return fetch(WAITLIST_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ email: address })
+      body: JSON.stringify({ email: address, company: document.getElementById('wl-company').value })
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); });
   }
 

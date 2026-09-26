@@ -11,3 +11,6 @@ node_modules/
 .wrangler/
 .aws-sam/
 *.zip
+
+# Local secrets for wrangler pages dev
+.dev.vars
