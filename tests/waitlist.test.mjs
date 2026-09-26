@@ -6,7 +6,7 @@ import { onRequestGet as showConfirm, onRequestPost as confirm } from '../src/ro
 import { confirmationUrl, verifyConfirmation } from '../src/lib.js';
 import worker from '../src/worker.js';
 
-const ORIGIN = 'https://cronpilot.com';
+const ORIGIN = 'https://www.cronpilot.com';
 const env = {
   RESEND_API_KEY: 're_test',
   WAITLIST_SIGNING_KEY: 'test-signing-key',
