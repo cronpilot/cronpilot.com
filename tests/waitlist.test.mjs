@@ -120,7 +120,8 @@ describe('/api/waitlist/confirm', () => {
     assert.match(await response.text(), /You're on the waitlist/);
     assert.equal(calls.length, 1);
     assert.equal(calls[0].url, 'https://api.resend.com/contacts');
-    assert.deepEqual(calls[0].body, { email: 'ada@example.com', unsubscribed: false, segments: ['seg_123'] });
+    // Resend expects segments as objects, not bare IDs: [{ id: '...' }].
+    assert.deepEqual(calls[0].body, { email: 'ada@example.com', unsubscribed: false, segments: [{ id: 'seg_123' }] });
   });
 
   it('treats an address that is already on the list as confirmed', async () => {
@@ -196,5 +197,24 @@ describe('worker routing', () => {
 
     assert.equal(response.status, 405);
     assert.equal(response.headers.get('Allow'), 'POST');
+  });
+});
+
+describe('Resend errors', () => {
+  it("logs Resend's error message when it rejects a contact", async () => {
+    respond = () => new Response('{"name":"validation_error","message":"Invalid segment"}', { status: 422 });
+    const logged = [];
+    const realError = console.error;
+    console.error = (...args) => logged.push(args.map(String).join(' '));
+
+    try {
+      const link = await confirmationUrl(ORIGIN, 'ada@example.com', env.WAITLIST_SIGNING_KEY);
+      const response = await confirm({ request: confirmForm(link), env });
+
+      assert.equal(response.status, 502);
+      assert.match(logged.join('\n'), /HTTP 422.*Invalid segment/);
+    } finally {
+      console.error = realError;
+    }
   });
 });

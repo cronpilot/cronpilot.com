@@ -134,14 +134,15 @@ export async function sendConfirmationEmail(env, email, link) {
   });
 
   if (!response.ok) {
-    throw new Error(`Resend rejected the confirmation email: HTTP ${response.status}`);
+    throw new Error(`Resend rejected the confirmation email: HTTP ${response.status} ${await errorDetails(response)}`);
   }
 }
 
 export async function addContact(env, email) {
   const body = { email, unsubscribed: false };
   if (env.RESEND_SEGMENT_ID) {
-    body.segments = [env.RESEND_SEGMENT_ID];
+    // Resend wants segment objects, not bare IDs.
+    body.segments = [{ id: env.RESEND_SEGMENT_ID }];
   }
 
   const response = await resend(env, '/contacts', body);
@@ -151,12 +152,18 @@ export async function addContact(env, email) {
   }
 
   // Confirming twice, or confirming an address already on the list, is fine.
-  const details = await response.text();
+  const details = await errorDetails(response);
   if ((response.status === 409 || response.status === 422) && /already exists/i.test(details)) {
     return;
   }
 
-  throw new Error(`Resend rejected the contact: HTTP ${response.status}`);
+  throw new Error(`Resend rejected the contact: HTTP ${response.status} ${details}`);
+}
+
+// Resend's error body (its name and message) so failures explain themselves in
+// the Worker's logs. It never contains the API key.
+async function errorDetails(response) {
+  return (await response.text()).slice(0, 500);
 }
 
 async function sha256(value) {

@@ -32,9 +32,10 @@ export async function onRequestGet({ request, env }) {
 
   return page(
     'Confirm your email',
-    `<h1>Join the Cron Pilot Cloud waitlist?</h1>
-     <p>Confirm that <strong>${escapeHtml(email)}</strong> should get an email when Cron Pilot Cloud launches.</p>
-     <form method="post">${hidden}<button type="submit">Confirm my email</button></form>`,
+    `<h1>One last click.</h1>
+     <p>Press Confirm to add <strong>${escapeHtml(email)}</strong> to the Cron Pilot Cloud waitlist. We'll email you once, when it launches.</p>
+     <form method="post">${hidden}<button type="submit">Confirm</button></form>
+     <p style="margin:20px 0 0;font-size:14px">This extra step stops email security scanners, which open links automatically, from signing you up.</p>`,
   );
 }
 
